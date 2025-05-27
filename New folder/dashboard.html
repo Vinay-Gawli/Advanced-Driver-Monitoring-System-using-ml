@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Drowsiness Detection System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            transition: background-color 0.3s;
+        }
+        
+        body.alert-active {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+        }
+        
+        .user-controls button {
+            background-color: transparent;
+            border: none;
+            color: var(--dark-color);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .user-controls button:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .user-controls button#logoutBtn {
+            color: var(--danger-color);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+        
+        .video-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        .video-header {
+            padding: 15px;
+            background-color: var(--dark-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .video-feed {
+            width: 100%;
+            height: 400px;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .video-feed video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .controls {
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        #startBtn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        #stopBtn {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .metric-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+        
+        .metric-card h3 {
+            margin-bottom: 15px;
+            color: var(--dark-color);
+            font-size: 18px;
+        }
+        
+        .status-container {
+            padding: 15px;
+            border-radius: 5px;
+            background-color: var(--light-color);
+            transition: background-color 0.3s;
+        }
+        
+        .status-container.active {
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+        
+        .status-label {
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .metric-item {
+            background-color: var(--light-color);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .metric-item .label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .metric-item .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+        
+        .alert-container {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s;
+            box-shadow: var(--shadow);
+        }
+        
+        .alert-container.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .alert-message {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .alert-icon {
+            font-size: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .record-btn {
+            margin-left: 10px;
+        }
+        
+        #startRecordingBtn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        #stopRecordingBtn {
+            background-color: #7f8c8d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>Drowsiness Detection System</h1>
+            </div>
+            <div class="user-controls">
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </header>
+        
+        <div class="dashboard">
+            <div class="video-container">
+                <div class="video-header">
+                    <h2>Live Detection</h2>
+                    <span id="status">Idle</span>
+                </div>
+                <div class="video-feed" id="videoFeed">
+                    <img src="/video_feed" width="100%" height="100%">
+                </div>
+                <div class="controls">
+                    <button id="startBtn">Start Detection</button>
+                    <button id="stopBtn" disabled>Stop Detection</button>
+                    <button id="startRecordingBtn" class="record-btn">Start Recording</button>
+                    <button id="stopRecordingBtn" class="record-btn" disabled>Stop Recording</button>
+                </div>
+            </div>
+            
+            <div class="metrics">
+                <div class="metric-card">
+                    <h3>Detection Status</h3>
+                    <div class="status-container" id="statusContainer">
+                        <div class="status-label">Current Status:</div>
+                        <div class="status-value" id="statusValue">Idle</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Drowsiness Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <div class="label">Eye Aspect Ratio (EAR)</div>
+                            <div class="value" id="earValue">0.00</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="label">Mouth Aspect Ratio (MAR)</div>
+                            <div class="value" id="marValue">0.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert-container" id="alertMessage">
+                    <div class="alert-message">Alert: Drowsiness detected!</div>
+                    <div class="alert-icon">⚠️</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let detectionRunning = false;
+        let recordingRunning = false;
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            console.log('Logging out...');
+            fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Redirect to login page
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Logout failed:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+            });
+        });
+
+        // Start Detection
+        document.getElementById('startBtn').addEventListener('click', function() {
+            if (!detectionRunning) {
+                console.log('Starting detection...');
+                fetch('/start_detection', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Detection response:', data);
+                    if (data.status === 'started') {
+                        detectionRunning = true;
+                        document.getElementById('startBtn').disabled = true;
+                        document.getElementById('stopBtn').disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error starting detection:', error);
+                });
+            }
+        });
+
+        // Stop Detection
+        document.getElementById('stopBtn').addEventListener('click', function() {
+            if (detectionRunning) {
+                console.log('Stopping detection...');
+                fetch('/stop_detection', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Stop detection response:', data);
+                    if (data.status === 'stopped') {
+                        detectionRunning = false;
+                        document.getElementById('stopBtn').disabled = true;
+                        document.getElementById('startBtn').disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error stopping detection:', error);
+                });
+            }
+        });
+
+        // Start Recording
+        document.getElementById('startRecordingBtn').addEventListener('click', function() {
+            if (!recordingRunning) {
+                console.log('Starting recording...');
+                fetch('/start_recording', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Recording response:', data);
+                    if (data.status === 'recording_started') {
+                        recordingRunning = true;
+                        document.getElementById('startRecordingBtn').disabled = true;
+                        document.getElementById('stopRecordingBtn').disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error starting recording:', error);
+                });
+            }
+        });
+
+        // Stop Recording
+        document.getElementById('stopRecordingBtn').addEventListener('click', function() {
+            if (recordingRunning) {
+                console.log('Stopping recording...');
+                fetch('/stop_recording', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Stop recording response:', data);
+                    if (data.status === 'recording_stopped') {
+                        recordingRunning = false;
+                        document.getElementById('stopRecordingBtn').disabled = true;
+                        document.getElementById('startRecordingBtn').disabled = false;
+                        updateRecordingsList();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error stopping recording:', error);
+                });
+            }
+        });
+
+        // Update metrics
+        function updateMetrics() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('earValue').textContent = data.ear.toFixed(2);
+                    document.getElementById('marValue').textContent = data.mar.toFixed(2);
+                    document.getElementById('statusValue').textContent = data.status;
+
+                    const alertElement = document.getElementById('alertMessage');
+                    if (data.isAlert) {
+                        alertElement.classList.add('visible');
+                        alertElement.querySelector('.alert-message').textContent = data.alertMessage;
+                    } else {
+                        alertElement.classList.remove('visible');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating metrics:', error);
+                });
+        }
+
+        // Update recordings list
+        function updateRecordingsList() {
+            fetch('/recordings')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Recordings list:', data);
+                    const recordingsList = document.getElementById('recordingsList');
+                    recordingsList.innerHTML = '';
+                    data.recordings.forEach(recording => {
+                        const item = document.createElement('div');
+                        item.className = 'recording-item';
+                        item.innerHTML = `
+                            <span>${recording.timestamp}</span>
+                            <span>Duration: ${recording.duration}</span>
+                            <span>${recording.filename}</span>
+                        `;
+                        recordingsList.appendChild(item);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error updating recordings list:', error);
+                });
+        }
+
+        // Update metrics every second
+        setInterval(updateMetrics, 1000);
+
+        // Initial update of recordings list
+        updateRecordingsList();
+
+        // Handle page unload
+        window.addEventListener('beforeunload', function(e) {
+            // Stop detection and recording if running
+            if (detectionRunning || recordingRunning) {
+                fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).catch(error => console.error('Error during page unload:', error));
+            }
+        });
+
+        // Log when the page is loaded
+        console.log('Dashboard page loaded');
+    </script>
+</body>
+</html>

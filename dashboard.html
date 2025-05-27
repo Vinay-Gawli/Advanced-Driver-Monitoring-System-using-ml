@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Drowsiness Detection System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --danger-color: #dc3545;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --text-color: #333;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+        }
+
+        .logout-btn {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .video-section {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-feed {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .status-section {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-card {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .status-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric {
+            background: white;
+            padding: 0.8rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.3rem;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .alert-box {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            background-color: var(--danger-color);
+            color: white;
+            display: none;
+        }
+
+        .alert-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .control-btn {
+            padding: 0.8rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .start-btn {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .stop-btn {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .record-btn {
+            background-color: var(--warning-color);
+            color: black;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.active {
+            background-color: var(--success-color);
+        }
+
+        .status-indicator.inactive {
+            background-color: var(--danger-color);
+        }
+
+        .status-indicator.warning {
+            background-color: var(--warning-color);
+        }
+
+        #currentStatus {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Driver Drowsiness Detection System</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <h2 class="status-header">Live Detection</h2>
+                <div class="video-container">
+                    <img src="/video_feed" alt="Video Feed" class="video-feed">
+                </div>
+            </div>
+
+            <div class="status-section">
+                <div class="status-card">
+                    <h3 class="status-header">Detection Status</h3>
+                    <div id="currentStatus">
+                        <span class="status-indicator inactive"></span>
+                        <span>Stopped</span>
+                    </div>
+
+                    <div class="metrics">
+                        <div class="metric">
+                            <div class="metric-label">Eye Aspect Ratio (EAR)</div>
+                            <div class="metric-value" id="earValue">0.00</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Mouth Aspect Ratio (MAR)</div>
+                            <div class="metric-value" id="marValue">0.00</div>
+                        </div>
+                    </div>
+
+                    <div id="alertBox" class="alert-box">
+                        <span id="alertMessage"></span>
+                    </div>
+
+                    <div class="controls">
+                        <button class="control-btn start-btn" onclick="startDetection()">Start Detection</button>
+                        <button class="control-btn stop-btn" onclick="stopDetection()">Stop Detection</button>
+                        <button class="control-btn record-btn" onclick="toggleRecording()" id="recordBtn">Start Recording</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRecording = false;
+        let detectionActive = false;
+
+        function updateStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    const statusIndicator = document.querySelector('.status-indicator');
+                    const statusText = document.querySelector('#currentStatus span:last-child');
+                    const alertBox = document.getElementById('alertBox');
+                    const alertMessage = document.getElementById('alertMessage');
+                    
+                    // Update status indicator and text
+                    statusText.textContent = data.status;
+                    if (data.status === 'Active') {
+                        statusIndicator.className = 'status-indicator active';
+                    } else if (data.status === 'Stopped') {
+                        statusIndicator.className = 'status-indicator inactive';
+                    } else {
+                        statusIndicator.className = 'status-indicator warning';
+                    }
+
+                    // Update metrics
+                    document.getElementById('earValue').textContent = data.ear.toFixed(2);
+                    document.getElementById('marValue').textContent = data.mar.toFixed(2);
+
+                    // Update alert box
+                    if (data.isAlert) {
+                        alertBox.classList.add('show');
+                        alertMessage.textContent = data.alertMessage;
+                    } else {
+                        alertBox.classList.remove('show');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function startDetection() {
+            fetch('/start_detection', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                detectionActive = true;
+                document.querySelector('.start-btn').disabled = true;
+                document.querySelector('.stop-btn').disabled = false;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function stopDetection() {
+            fetch('/stop_detection', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                detectionActive = false;
+                document.querySelector('.start-btn').disabled = false;
+                document.querySelector('.stop-btn').disabled = true;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function toggleRecording() {
+            const recordBtn = document.getElementById('recordBtn');
+            if (!isRecording) {
+                fetch('/start_recording', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'recording_started') {
+                        isRecording = true;
+                        recordBtn.textContent = 'Stop Recording';
+                        recordBtn.style.backgroundColor = 'var(--danger-color)';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            } else {
+                fetch('/stop_recording', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'recording_stopped') {
+                        isRecording = false;
+                        recordBtn.textContent = 'Start Recording';
+                        recordBtn.style.backgroundColor = 'var(--warning-color)';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+
+        function logout() {
+            fetch('/logout', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/login';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Update status every second
+        setInterval(updateStatus, 1000);
+
+        // Initial status update
+        updateStatus();
+    </script>
+</body>
+</html> 
